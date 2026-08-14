@@ -1,0 +1,3 @@
+_service: _wirelessremote._tcp
+port: 8080
+name: WirelessRemote-TV
