@@ -1,0 +1,13 @@
+WirelessRemoteReceiver/
+├── app/
+│   └── src/
+│       └── main/
+│           ├── AndroidManifest.xml
+│           ├── java/com/wirelessremote/receiver/
+│           │   ├── MainActivity.kt
+│           │   ├── RemoteWebSocketServer.kt
+│           │   └── RemoteCommandHandler.kt
+│           └── res/
+│               └── layout/
+│                   └── activity_main.xml
+└── build.gradle
