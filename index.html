@@ -1,0 +1,1171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0,
+               maximum-scale=1.0, user-scalable=no">
+
+<meta name="theme-color" content="#080b12">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+<title>Wireless Remote Control</title>
+
+<style>
+* {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+}
+
+html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    min-height: 100%;
+    background: #080b12;
+    color: #fff;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+body {
+    display: flex;
+    justify-content: center;
+}
+
+.app {
+    width: 100%;
+    max-width: 520px;
+    min-height: 100vh;
+    padding: 15px;
+    padding-bottom: 35px;
+}
+
+/* HEADER */
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 4px 15px;
+}
+
+.logo {
+    font-size: 21px;
+    font-weight: 800;
+}
+
+.logo span {
+    color: #38bdf8;
+}
+
+.connection {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 12px;
+    color: #aaa;
+}
+
+.status-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #ef4444;
+    box-shadow: 0 0 8px #ef4444;
+}
+
+.status-dot.connected {
+    background: #22c55e;
+    box-shadow: 0 0 8px #22c55e;
+}
+
+/* DEVICE PANEL */
+
+.device-panel {
+    background: linear-gradient(145deg, #151b27, #0e131d);
+    border: 1px solid #242d3c;
+    border-radius: 20px;
+    padding: 15px;
+    margin-bottom: 15px;
+}
+
+.device-row {
+    display: flex;
+    gap: 10px;
+}
+
+input {
+    flex: 1;
+    min-width: 0;
+    background: #080b12;
+    color: #fff;
+    border: 1px solid #303b4d;
+    border-radius: 12px;
+    padding: 13px;
+    font-size: 14px;
+    outline: none;
+}
+
+input:focus {
+    border-color: #38bdf8;
+}
+
+.connect-btn {
+    border: 0;
+    border-radius: 12px;
+    padding: 0 17px;
+    background: #38bdf8;
+    color: #061018;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.connect-btn:active {
+    transform: scale(.96);
+}
+
+.info {
+    margin-top: 9px;
+    color: #8c98aa;
+    font-size: 11px;
+    line-height: 1.5;
+}
+
+/* BUTTONS */
+
+button {
+    font-family: inherit;
+    touch-action: manipulation;
+}
+
+.remote-btn {
+    border: 0;
+    color: #fff;
+    background: #182130;
+    border: 1px solid #283448;
+    border-radius: 15px;
+    min-height: 52px;
+    font-size: 17px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 5px 12px rgba(0,0,0,.22);
+}
+
+.remote-btn:active {
+    transform: scale(.92);
+    background: #27354a;
+}
+
+.small-btn {
+    min-height: 45px;
+    font-size: 14px;
+}
+
+.blue {
+    background: #075985;
+    border-color: #0ea5e9;
+}
+
+.green {
+    background: #166534;
+    border-color: #22c55e;
+}
+
+.red {
+    background: #991b1b;
+    border-color: #ef4444;
+}
+
+.orange {
+    background: #9a3412;
+    border-color: #f97316;
+}
+
+/* QUICK ROW */
+
+.quick-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 9px;
+    margin-bottom: 15px;
+}
+
+/* MAIN CONTROLS */
+
+.main-controls {
+    display: grid;
+    grid-template-columns: 1fr 1.25fr 1fr;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.side-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* D PAD */
+
+.dpad-area {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.dpad {
+    position: relative;
+    width: 185px;
+    height: 185px;
+}
+
+.dpad button {
+    position: absolute;
+    width: 58px;
+    height: 58px;
+    border-radius: 15px;
+    background: #202b3c;
+    color: white;
+    border: 1px solid #34445c;
+    font-size: 25px;
+    font-weight: bold;
+    box-shadow: 0 5px 10px rgba(0,0,0,.3);
+}
+
+.dpad button:active {
+    transform: scale(.9);
+    background: #334155;
+}
+
+.up {
+    top: 0;
+    left: 63px;
+}
+
+.down {
+    bottom: 0;
+    left: 63px;
+}
+
+.left {
+    left: 0;
+    top: 63px;
+}
+
+.right {
+    right: 0;
+    top: 63px;
+}
+
+.ok {
+    left: 63px;
+    top: 63px;
+    background: #0f766e !important;
+    border-color: #14b8a6 !important;
+    font-size: 15px !important;
+}
+
+/* VOLUME */
+
+.volume-box,
+.channel-box {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* MEDIA */
+
+.media-row {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 9px;
+    margin-bottom: 15px;
+}
+
+.media-row button {
+    min-height: 50px;
+}
+
+/* NUMBER PAD */
+
+.number-title {
+    color: #8793a5;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin: 12px 0 8px 3px;
+}
+
+.number-pad {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 9px;
+}
+
+.number-pad button {
+    min-height: 53px;
+    font-size: 18px;
+}
+
+/* SPECIAL */
+
+.special-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 9px;
+    margin-top: 15px;
+}
+
+/* FOOTER */
+
+.footer {
+    text-align: center;
+    color: #586579;
+    font-size: 11px;
+    margin-top: 20px;
+}
+
+/* TOAST */
+
+.toast {
+    position: fixed;
+    left: 50%;
+    bottom: 25px;
+    transform: translateX(-50%) translateY(100px);
+    background: #f8fafc;
+    color: #071019;
+    padding: 12px 18px;
+    border-radius: 50px;
+    font-size: 13px;
+    font-weight: 700;
+    z-index: 9999;
+    transition: .25s ease;
+    box-shadow: 0 8px 25px rgba(0,0,0,.4);
+}
+
+.toast.show {
+    transform: translateX(-50%) translateY(0);
+}
+
+/* MOBILE */
+
+@media (max-width: 380px) {
+    .app {
+        padding: 10px;
+    }
+
+    .dpad {
+        transform: scale(.88);
+    }
+
+    .remote-btn {
+        font-size: 15px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div class="app">
+
+    <!-- HEADER -->
+
+    <div class="header">
+        <div class="logo">
+            Wireless<span>Remote</span>
+        </div>
+
+        <div class="connection">
+            <div id="statusDot" class="status-dot"></div>
+            <span id="statusText">Disconnected</span>
+        </div>
+    </div>
+
+
+    <!-- CONNECTION -->
+
+    <div class="device-panel">
+
+        <div class="device-row">
+
+            <input
+                id="serverAddress"
+                type="text"
+                placeholder="ws://192.168.1.100:8080"
+                autocomplete="off"
+            >
+
+            <button
+                id="connectButton"
+                class="connect-btn"
+                onclick="toggleConnection()">
+                CONNECT
+            </button>
+
+        </div>
+
+        <div class="info">
+            Enter the WebSocket address of your own Android/iOS receiver
+            app. Example: ws://192.168.1.100:8080
+        </div>
+
+    </div>
+
+
+    <!-- QUICK BUTTONS -->
+
+    <div class="quick-row">
+
+        <button
+            class="remote-btn small-btn blue"
+            onclick="sendCommand('HOME')">
+            🏠
+        </button>
+
+        <button
+            class="remote-btn small-btn"
+            onclick="sendCommand('MENU')">
+            ☰
+        </button>
+
+        <button
+            class="remote-btn small-btn"
+            onclick="sendCommand('BACK')">
+            ↩
+        </button>
+
+        <button
+            class="remote-btn small-btn red"
+            onclick="sendCommand('POWER')">
+            ⏻
+        </button>
+
+    </div>
+
+
+    <!-- MAIN CONTROL -->
+
+    <div class="main-controls">
+
+        <!-- VOLUME -->
+
+        <div class="side-controls">
+
+            <button
+                class="remote-btn blue"
+                onclick="sendCommand('VOLUME_UP')">
+                🔊+
+            </button>
+
+            <button
+                class="remote-btn"
+                onclick="sendCommand('MUTE')">
+                🔇
+            </button>
+
+            <button
+                class="remote-btn"
+                onclick="sendCommand('VOLUME_DOWN')">
+                🔉−
+            </button>
+
+        </div>
+
+
+        <!-- D PAD -->
+
+        <div class="dpad-area">
+
+            <div class="dpad">
+
+                <button
+                    class="up"
+                    onclick="sendCommand('UP')">
+                    ▲
+                </button>
+
+                <button
+                    class="left"
+                    onclick="sendCommand('LEFT')">
+                    ◀
+                </button>
+
+                <button
+                    class="ok"
+                    onclick="sendCommand('OK')">
+                    OK
+                </button>
+
+                <button
+                    class="right"
+                    onclick="sendCommand('RIGHT')">
+                    ▶
+                </button>
+
+                <button
+                    class="down"
+                    onclick="sendCommand('DOWN')">
+                    ▼
+                </button>
+
+            </div>
+
+        </div>
+
+
+        <!-- CHANNEL -->
+
+        <div class="side-controls">
+
+            <button
+                class="remote-btn"
+                onclick="sendCommand('CHANNEL_UP')">
+                CH+
+            </button>
+
+            <button
+                class="remote-btn"
+                onclick="sendCommand('GUIDE')">
+                GUIDE
+            </button>
+
+            <button
+                class="remote-btn"
+                onclick="sendCommand('CHANNEL_DOWN')">
+                CH−
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <!-- MEDIA -->
+
+    <div class="media-row">
+
+        <button
+            class="remote-btn small-btn"
+            onclick="sendCommand('PREVIOUS')">
+            ⏮
+        </button>
+
+        <button
+            class="remote-btn small-btn"
+            onclick="sendCommand('REWIND')">
+            ⏪
+        </button>
+
+        <button
+            class="remote-btn small-btn green"
+            onclick="sendCommand('PLAY_PAUSE')">
+            ▶⏸
+        </button>
+
+        <button
+            class="remote-btn small-btn"
+            onclick="sendCommand('FAST_FORWARD')">
+            ⏩
+        </button>
+
+        <button
+            class="remote-btn small-btn"
+            onclick="sendCommand('NEXT')">
+            ⏭
+        </button>
+
+    </div>
+
+
+    <!-- NUMBER PAD -->
+
+    <div class="number-title">
+        Number Pad
+    </div>
+
+    <div class="number-pad">
+
+        <button
+            class="remote-btn"
+            onclick="sendNumber('1')">
+            1
+        </button>
+
+        <button
+            class="remote-btn"
+            onclick="sendNumber('2')">
+            2
+        </button>
+
+        <button
+            class="remote-btn"
+            onclick="sendNumber('3')">
+            3
+        </button>
+
+        <button
+            class="remote-btn"
+            onclick="sendNumber('4')">
+            4
+        </button>
+
+        <button
+            class="remote-btn"
+            onclick="sendNumber('5')">
+            5
+        </button>
+
+        <button
+            class="remote-btn"
+            onclick="sendNumber('6')">
+            6
+        </button>
+
+        <button
+            class="remote-btn"
+            onclick="sendNumber('7')">
+            7
+        </button>
+
+        <button
+            class="remote-btn"
+            onclick="sendNumber('8')">
+            8
+        </button>
+
+        <button
+            class="remote-btn"
+            onclick="sendNumber('9')">
+            9
+        </button>
+
+        <button
+            class="remote-btn"
+            onclick="sendNumber('*')">
+            *
+        </button>
+
+        <button
+            class="remote-btn"
+            onclick="sendNumber('0')">
+            0
+        </button>
+
+        <button
+            class="remote-btn"
+            onclick="sendNumber('#')">
+            #
+        </button>
+
+    </div>
+
+
+    <!-- SPECIAL -->
+
+    <div class="special-row">
+
+        <button
+            class="remote-btn small-btn orange"
+            onclick="sendCommand('INPUT')">
+            INPUT
+        </button>
+
+        <button
+            class="remote-btn small-btn"
+            onclick="sendCommand('INFO')">
+            INFO
+        </button>
+
+        <button
+            class="remote-btn small-btn red"
+            onclick="sendCommand('RECORD')">
+            ● REC
+        </button>
+
+    </div>
+
+
+    <div class="footer">
+        Wireless Remote Control • Android & iOS Ready
+    </div>
+
+</div>
+
+
+<!-- TOAST -->
+
+<div id="toast" class="toast">
+    Command sent
+</div>
+
+
+<script>
+
+let socket = null;
+let connected = false;
+
+
+/* =========================
+   CONNECTION
+========================= */
+
+function toggleConnection() {
+
+    if (connected) {
+        disconnect();
+    } else {
+        connect();
+    }
+}
+
+
+function connect() {
+
+    const address =
+        document.getElementById("serverAddress").value.trim();
+
+    if (!address) {
+
+        showToast(
+            "Enter your receiver WebSocket address"
+        );
+
+        return;
+    }
+
+
+    try {
+
+        socket = new WebSocket(address);
+
+
+        socket.onopen = function() {
+
+            connected = true;
+
+            updateStatus();
+
+            showToast("Connected");
+
+            sendRaw({
+                type: "REMOTE_CONNECTED",
+                device: getDeviceInfo()
+            });
+
+        };
+
+
+        socket.onmessage = function(event) {
+
+            console.log(
+                "Receiver:",
+                event.data
+            );
+
+        };
+
+
+        socket.onerror = function() {
+
+            showToast(
+                "Connection error"
+            );
+
+        };
+
+
+        socket.onclose = function() {
+
+            connected = false;
+
+            updateStatus();
+
+            showToast(
+                "Disconnected"
+            );
+
+        };
+
+    } catch (error) {
+
+        showToast(
+            "Invalid WebSocket address"
+        );
+
+    }
+}
+
+
+function disconnect() {
+
+    if (socket) {
+
+        socket.close();
+
+    }
+
+    socket = null;
+
+    connected = false;
+
+    updateStatus();
+
+}
+
+
+/* =========================
+   STATUS
+========================= */
+
+function updateStatus() {
+
+    const dot =
+        document.getElementById("statusDot");
+
+    const text =
+        document.getElementById("statusText");
+
+    const button =
+        document.getElementById("connectButton");
+
+
+    if (connected) {
+
+        dot.classList.add("connected");
+
+        text.textContent =
+            "Connected";
+
+        button.textContent =
+            "DISCONNECT";
+
+    } else {
+
+        dot.classList.remove("connected");
+
+        text.textContent =
+            "Disconnected";
+
+        button.textContent =
+            "CONNECT";
+
+    }
+
+}
+
+
+/* =========================
+   COMMAND SYSTEM
+========================= */
+
+function sendCommand(command) {
+
+    const packet = {
+
+        type: "REMOTE_COMMAND",
+
+        command: command,
+
+        timestamp: Date.now(),
+
+        device: getDeviceInfo()
+
+    };
+
+
+    sendRaw(packet);
+
+
+    showToast(
+        command.replaceAll("_", " ")
+    );
+
+}
+
+
+function sendNumber(number) {
+
+    const packet = {
+
+        type: "REMOTE_NUMBER",
+
+        number: number,
+
+        timestamp: Date.now()
+
+    };
+
+
+    sendRaw(packet);
+
+    showToast(
+        "Number " + number
+    );
+
+}
+
+
+/* =========================
+   SEND DATA
+========================= */
+
+function sendRaw(data) {
+
+    console.log(
+        "Remote:",
+        data
+    );
+
+
+    if (
+        socket &&
+        socket.readyState === WebSocket.OPEN
+    ) {
+
+        socket.send(
+            JSON.stringify(data)
+        );
+
+    } else {
+
+        /*
+         * Demo mode.
+         *
+         * The remote buttons still work visually
+         * even when no receiver is connected.
+         */
+
+    }
+
+}
+
+
+/* =========================
+   DEVICE INFORMATION
+========================= */
+
+function getDeviceInfo() {
+
+    return {
+
+        platform:
+            navigator.platform,
+
+        userAgent:
+            navigator.userAgent,
+
+        language:
+            navigator.language,
+
+        screen:
+            window.innerWidth +
+            "x" +
+            window.innerHeight
+
+    };
+
+}
+
+
+/* =========================
+   TOAST
+========================= */
+
+let toastTimer;
+
+
+function showToast(message) {
+
+    const toast =
+        document.getElementById("toast");
+
+    toast.textContent =
+        message;
+
+    toast.classList.add("show");
+
+
+    clearTimeout(
+        toastTimer
+    );
+
+
+    toastTimer =
+        setTimeout(function() {
+
+            toast.classList.remove(
+                "show"
+            );
+
+        }, 1200);
+
+}
+
+
+/* =========================
+   KEYBOARD SUPPORT
+========================= */
+
+document.addEventListener(
+    "keydown",
+    function(event) {
+
+        switch (event.key) {
+
+            case "ArrowUp":
+                sendCommand("UP");
+                break;
+
+            case "ArrowDown":
+                sendCommand("DOWN");
+                break;
+
+            case "ArrowLeft":
+                sendCommand("LEFT");
+                break;
+
+            case "ArrowRight":
+                sendCommand("RIGHT");
+                break;
+
+            case "Enter":
+                sendCommand("OK");
+                break;
+
+            case "Escape":
+                sendCommand("BACK");
+                break;
+
+            case " ":
+                sendCommand("PLAY_PAUSE");
+                break;
+
+        }
+
+    }
+);
+
+
+/* =========================
+   LONG PRESS SUPPORT
+========================= */
+
+function addLongPress(button, command) {
+
+    let timer = null;
+
+    button.addEventListener(
+        "touchstart",
+        function() {
+
+            timer = setTimeout(
+                function() {
+
+                    sendCommand(
+                        command + "_LONG"
+                    );
+
+                },
+                700
+            );
+
+        },
+        {
+            passive: true
+        }
+    );
+
+
+    button.addEventListener(
+        "touchend",
+        function() {
+
+            clearTimeout(timer);
+
+        },
+        {
+            passive: true
+        }
+    );
+
+}
+
+
+/* =========================
+   PREVENT DOUBLE TAP ZOOM
+========================= */
+
+let lastTouchEnd = 0;
+
+document.addEventListener(
+    "touchend",
+    function(event) {
+
+        const now =
+            Date.now();
+
+        if (
+            now - lastTouchEnd <= 300
+        ) {
+
+            event.preventDefault();
+
+        }
+
+        lastTouchEnd =
+            now;
+
+    },
+    false
+);
+
+
+/* =========================
+   LOAD SAVED ADDRESS
+========================= */
+
+const savedAddress =
+    localStorage.getItem(
+        "remoteServerAddress"
+    );
+
+
+if (savedAddress) {
+
+    document.getElementById(
+        "serverAddress"
+    ).value =
+        savedAddress;
+
+}
+
+
+document.getElementById(
+    "serverAddress"
+).addEventListener(
+    "change",
+    function() {
+
+        localStorage.setItem(
+            "remoteServerAddress",
+            this.value.trim()
+        );
+
+    }
+);
+
+
+/* =========================
+   START
+========================= */
+
+updateStatus();
+
+</script>
+
+</body>
+</html>
