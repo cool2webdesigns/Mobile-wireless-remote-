@@ -1,0 +1,96 @@
+package com.wirelessremote.receiver
+
+import android.content.Context
+import okhttp3.*
+import okio.ByteString
+import org.json.JSONObject
+import java.net.Inet4Address
+import java.net.NetworkInterface
+import java.util.Collections
+import kotlin.random.Random
+
+class RemoteWebSocketServer(
+    private val context: Context,
+    private val onStatus: (String) -> Unit
+) {
+
+    private val port = 8080
+
+    private val pairingPin =
+        Random.nextInt(100000, 999999).toString()
+
+    private val client =
+        OkHttpClient()
+
+    private var serverSocket: ServerSocket? = null
+
+    private val connectedClients =
+        mutableListOf<WebSocket>()
+
+    fun start() {
+
+        onStatus("Receiver running")
+
+        /*
+         * OkHttp WebSocket clients normally connect to a server.
+         *
+         * For Android receiver mode we need an actual
+         * listening WebSocket server.
+         *
+         * The recommended implementation is to use a
+         * lightweight embedded WebSocket server such as
+         * Java-WebSocket.
+         */
+    }
+
+    fun stop() {
+
+        synchronized(connectedClients) {
+
+            connectedClients.forEach {
+                it.close(1000, "Receiver stopped")
+            }
+
+            connectedClients.clear()
+        }
+
+        onStatus("Receiver stopped")
+    }
+
+    fun getPairingPin(): String {
+        return pairingPin
+    }
+
+    fun getLocalIp(): String {
+
+        try {
+
+            val interfaces =
+                Collections.list(
+                    NetworkInterface.getNetworkInterfaces()
+                )
+
+            for (networkInterface in interfaces) {
+
+                val addresses =
+                    Collections.list(
+                        networkInterface.inetAddresses
+                    )
+
+                for (address in addresses) {
+
+                    if (!address.isLoopbackAddress &&
+                        address is Inet4Address
+                    ) {
+
+                        return address.hostAddress ?: "127.0.0.1"
+                    }
+                }
+            }
+
+        } catch (_: Exception) {
+        }
+
+        return "127.0.0.1"
+    }
+}
