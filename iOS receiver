@@ -1,0 +1,7 @@
+iPhone Remote
+      ↓
+Wi-Fi / WebSocket
+      ↓
+Your iOS Receiver App
+      ↓
+Your own app's functions
