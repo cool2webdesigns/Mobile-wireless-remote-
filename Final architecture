@@ -1,0 +1,23 @@
+                 ┌──────────────────────┐
+                 │  Android/iOS Remote  │
+                 │      index.html      │
+                 └──────────┬───────────┘
+                            │
+                         Wi-Fi
+                            │
+                     WebSocket + PIN
+                            │
+              ┌─────────────┴─────────────┐
+              │                           │
+       ┌──────▼──────┐             ┌──────▼──────┐
+       │ Android     │             │ iOS         │
+       │ Receiver    │             │ Receiver    │
+       │              │             │             │
+       │ Discovery    │             │ Discovery   │
+       │ Pairing PIN  │             │ Pairing PIN │
+       │ WebSocket    │             │ WebSocket   │
+       │ Commands     │             │ Commands    │
+       └──────┬──────┘             └──────┬──────┘
+              │                           │
+       Android actions              Your iOS app
+       Media/volume/etc.            functions
