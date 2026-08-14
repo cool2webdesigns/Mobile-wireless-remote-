@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#080b12">
+<title>Wireless Remote</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none}
+body{margin:0;background:#080b12;color:#fff;font-family:Arial,sans-serif}
+.app{max-width:520px;margin:auto;min-height:100vh;padding:14px 14px 35px}
+.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.logo{font-size:21px;font-weight:800}.logo span{color:#38bdf8}
+.status{display:flex;gap:7px;align-items:center;font-size:12px;color:#aab4c2}
+.dot{width:10px;height:10px;border-radius:50%;background:#ef4444;box-shadow:0 0 8px #ef4444}
+.dot.on{background:#22c55e;box-shadow:0 0 8px #22c55e}
+.card{background:linear-gradient(145deg,#151b27,#0e131d);border:1px solid #273244;border-radius:18px;padding:15px;margin-bottom:14px}
+.title{font-size:14px;font-weight:800;margin-bottom:10px}
+.muted{font-size:12px;color:#8793a5;line-height:1.5}
+.device{padding:12px;border:1px solid #2b384b;border-radius:13px;background:#0b111a;margin:8px 0}
+.device strong{display:block;font-size:15px}.device small{color:#8995a7}
+.row{display:flex;gap:9px;margin-top:10px}
+input{width:100%;padding:13px;border-radius:12px;border:1px solid #344157;background:#080b12;color:#fff;font-size:15px;outline:none}
+button{border:0;color:#fff;background:#1a2433;border:1px solid #2d3b50;border-radius:14px;min-height:50px;font-weight:800;font-size:15px;touch-action:manipulation}
+button:active{transform:scale(.94);background:#304158}
+.primary{background:#075985;border-color:#0ea5e9}.green{background:#166534;border-color:#22c55e}.red{background:#991b1b;border-color:#ef4444}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}
+.main{display:grid;grid-template-columns:1fr 1.3fr 1fr;gap:10px;align-items:center}
+.side{display:flex;flex-direction:column;gap:9px}
+.dpad{width:180px;height:180px;position:relative;margin:auto}
+.dpad button{position:absolute;width:57px;height:57px;padding:0}
+.up{left:61px;top:0}.down{left:61px;bottom:0}.left{left:0;top:61px}.right{right:0;top:61px}.ok{left:61px;top:61px;background:#0f766e;border-color:#14b8a6}
+.media{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.numbers{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.special{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.pinOverlay{position:fixed;inset:0;background:rgba(0,0,0,.78);display:none;align-items:center;justify-content:center;padding:20px;z-index:10}
+.pinBox{width:100%;max-width:390px;background:#121a26;border:1px solid #34445b;border-radius:20px;padding:22px}
+.pinBox h2{margin:0 0 8px}.pinBox input{text-align:center;font-size:27px;letter-spacing:7px}
+.toast{position:fixed;bottom:22px;left:50%;transform:translate(-50%,120px);background:#f8fafc;color:#071019;padding:12px 18px;border-radius:30px;font-weight:800;z-index:20;transition:.25s}
+.toast.show{transform:translate(-50%,0)}
+@media(max-width:380px){.app{padding:10px}.dpad{transform:scale(.9);margin-top:-8px;margin-bottom:-8px}}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="header">
+    <div class="logo">Wireless<span>Remote</span></div>
+    <div class="status"><span id="dot" class="dot"></span><span id="status">Disconnected</span></div>
+  </div>
+
+  <section class="card">
+    <div class="title">Receiver discovery</div>
+    <div class="muted">
+      The remote first tries the last paired receiver automatically.
+      For true zero-touch LAN discovery, the receiver must advertise a
+      discovery service. This page also supports an optional discovery
+      endpoint and manual IP fallback.
+    </div>
+
+    <div id="devices"></div>
+
+    <div class="row">
+      <input id="address" placeholder="ws://192.168.1.25:8080" autocomplete="off">
+      <button class="primary" onclick="connectManual()">CONNECT</button>
+    </div>
+
+    <div class="row">
+      <button style="width:100%" onclick="discover()">🔎 DISCOVER RECEIVERS</button>
+      <button style="width:100%" onclick="forgetReceiver()">FORGET</button>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="grid4">
+      <button class="primary" onclick="sendCommand('HOME')">🏠</button>
+      <button onclick="sendCommand('MENU')">☰</button>
+      <button onclick="sendCommand('BACK')">↩</button>
+      <button class="red" onclick="sendCommand('POWER')">⏻</button>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="main">
+      <div class="side">
+        <button onclick="sendCommand('VOLUME_UP')">🔊+</button>
+        <button onclick="sendCommand('MUTE')">🔇</button>
+        <button onclick="sendCommand('VOLUME_DOWN')">🔉−</button>
+      </div>
+
+      <div class="dpad">
+        <button class="up" onclick="sendCommand('UP')">▲</button>
+        <button class="left" onclick="sendCommand('LEFT')">◀</button>
+        <button class="ok" onclick="sendCommand('OK')">OK</button>
+        <button class="right" onclick="sendCommand('RIGHT')">▶</button>
+        <button class="down" onclick="sendCommand('DOWN')">▼</button>
+      </div>
+
+      <div class="side">
+        <button onclick="sendCommand('CHANNEL_UP')">CH+</button>
+        <button onclick="sendCommand('GUIDE')">GUIDE</button>
+        <button onclick="sendCommand('CHANNEL_DOWN')">CH−</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="media">
+      <button onclick="sendCommand('PREVIOUS')">⏮</button>
+      <button onclick="sendCommand('REWIND')">⏪</button>
+      <button class="green" onclick="sendCommand('PLAY_PAUSE')">▶⏸</button>
+      <button onclick="sendCommand('FAST_FORWARD')">⏩</button>
+      <button onclick="sendCommand('NEXT')">⏭</button>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="title">Number Pad</div>
+    <div class="numbers">
+      <button onclick="sendNumber('1')">1</button><button onclick="sendNumber('2')">2</button><button onclick="sendNumber('3')">3</button>
+      <button onclick="sendNumber('4')">4</button><button onclick="sendNumber('5')">5</button><button onclick="sendNumber('6')">6</button>
+      <button onclick="sendNumber('7')">7</button><button onclick="sendNumber('8')">8</button><button onclick="sendNumber('9')">9</button>
+      <button onclick="sendNumber('*')">*</button><button onclick="sendNumber('0')">0</button><button onclick="sendNumber('#')">#</button>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="special">
+      <button onclick="sendCommand('INPUT')">INPUT</button>
+      <button onclick="sendCommand('INFO')">INFO</button>
+      <button class="red" onclick="sendCommand('RECORD')">● REC</button>
+    </div>
+  </section>
+
+  <div class="muted" style="text-align:center">Wireless Remote • Android Receiver</div>
+</div>
+
+<div id="pinOverlay" class="pinOverlay">
+  <div class="pinBox">
+    <h2>Pair Receiver</h2>
+    <div id="pairName" class="muted">Enter the 6-digit PIN shown on the Android receiver.</div>
+    <br>
+    <input id="pin" inputmode="numeric" maxlength="6" placeholder="••••••">
+    <div class="row">
+      <button style="width:100%" onclick="submitPin()">PAIR</button>
+      <button style="width:100%" onclick="closePin()">CANCEL</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast">Ready</div>
+
+<script>
+"use strict";
+
+const STORAGE = "wirelessRemote.receiver.v2";
+let socket = null;
+let receiver = null;
+let pendingAddress = null;
+let paired = false;
+let discoveryTimer = null;
+
+const $ = id => document.getElementById(id);
+
+function toast(message) {
+  $("toast").textContent = message;
+  $("toast").classList.add("show");
+  clearTimeout(toast.t);
+  toast.t = setTimeout(() => $("toast").classList.remove("show"), 1500);
+}
+
+function setStatus(text, on=false) {
+  $("status").textContent = text;
+  $("dot").classList.toggle("on", on);
+}
+
+function saveReceiver() {
+  if (receiver) localStorage.setItem(STORAGE, JSON.stringify(receiver));
+}
+
+function loadReceiver() {
+  try {
+    const x = JSON.parse(localStorage.getItem(STORAGE) || "null");
+    if (x && x.address) {
+      receiver = x;
+      $("address").value = x.address;
+      renderDevice(x, true);
+      return x;
+    }
+  } catch {}
+  return null;
+}
+
+function forgetReceiver() {
+  localStorage.removeItem(STORAGE);
+  receiver = null;
+  paired = false;
+  $("devices").innerHTML = "";
+  $("address").value = "";
+  disconnect();
+  toast("Saved receiver forgotten");
+}
+
+function renderDevice(d, saved=false) {
+  const wrap = document.createElement("div");
+  wrap.className = "device";
+  wrap.innerHTML = `
+    <strong>${escapeHtml(d.name || "Wireless Remote Receiver")}</strong>
+    <small>${escapeHtml(d.address)} ${saved ? "• saved" : ""}</small>
+  `;
+  const btn = document.createElement("button");
+  btn.textContent = "CONNECT";
+  btn.style.width = "100%";
+  btn.style.marginTop = "9px";
+  btn.onclick = () => connectTo(d.address);
+  wrap.appendChild(btn);
+  $("devices").prepend(wrap);
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+  }[c]));
+}
+
+function connectManual() {
+  const a = normalizeAddress($("address").value.trim());
+  if (!a) return toast("Enter a receiver address");
+  connectTo(a);
+}
+
+function normalizeAddress(a) {
+  if (!a) return "";
+  if (/^ws:\/\//i.test(a) || /^wss:\/\//i.test(a)) return a;
+  if (/^https?:\/\//i.test(a)) return a.replace(/^http/i, "ws");
+  return "ws://" + a;
+}
+
+function connectTo(address) {
+  disconnect(false);
+  pendingAddress = address;
+  setStatus("Connecting…");
+  toast("Connecting");
+
+  try {
+    socket = new WebSocket(address);
+  } catch {
+    setStatus("Invalid address");
+    return toast("Invalid WebSocket address");
+  }
+
+  socket.onopen = () => {
+    setStatus("Connected", true);
+    receiver = {
+      address,
+      name: receiver?.name || "Wireless Remote Receiver",
+      paired: false
+    };
+    saveReceiver();
+
+    // The Android receiver supplied with this project sends PAIR_REQUIRED.
+    // We also send a harmless discovery/hello packet for compatible receivers.
+    sendRaw({
+      type: "HELLO",
+      deviceName: navigator.userAgent,
+      client: "WirelessRemoteWeb"
+    });
+
+    toast("Receiver connected");
+  };
+
+  socket.onmessage = e => {
+    let msg;
+    try { msg = JSON.parse(e.data); } catch { return; }
+
+    if (msg.type === "PAIR_REQUIRED") {
+      paired = false;
+      $("pairOverlay");
+      $("pairName").textContent =
+        "Enter the 6-digit PIN shown on the Android receiver.";
+      $("pin").value = "";
+      $("pinOverlay").style.display = "flex";
+      setTimeout(() => $("pin").focus(), 100);
+      return;
+    }
+
+    if (msg.type === "PAIR_SUCCESS") {
+      paired = true;
+      if (receiver) {
+        receiver.name = msg.receiver || receiver.name;
+        receiver.paired = true;
+        saveReceiver();
+      }
+      closePin();
+      toast("Paired successfully");
+      return;
+    }
+
+    if (msg.type === "PAIR_FAILED") {
+      paired = false;
+      toast("Wrong PIN");
+      $("pin").value = "";
+      $("pin").focus();
+      return;
+    }
+
+    if (msg.type === "COMMAND_RESULT") {
+      console.log("Receiver:", msg);
+      return;
+    }
+
+    if (msg.type === "PONG") return;
+  };
+
+  socket.onerror = () => {
+    setStatus("Connection failed");
+    toast("Connection failed");
+  };
+
+  socket.onclose = () => {
+    paired = false;
+    setStatus("Disconnected");
+    socket = null;
+  };
+}
+
+function disconnect(show=true) {
+  if (socket) {
+    try { socket.close(); } catch {}
+  }
+  socket = null;
+  paired = false;
+  setStatus("Disconnected");
+  if (show) toast("Disconnected");
+}
+
+function submitPin() {
+  const pin = $("pin").value.trim();
+  if (!/^\d{6}$/.test(pin)) {
+    toast("Enter 6 digits");
+    return;
+  }
+  sendRaw({
+    type: "PAIR_REQUEST",
+    pin,
+    deviceName: navigator.userAgent
+  });
+}
+
+function closePin() {
+  $("pinOverlay").style.display = "none";
+}
+
+function sendCommand(command) {
+  if (!socket || socket.readyState !== WebSocket.OPEN) {
+    toast("Connect to receiver first");
+    autoReconnect();
+    return;
+  }
+  if (!paired) {
+    toast("Pair receiver first");
+    $("pinOverlay").style.display = "flex";
+    return;
+  }
+
+  sendRaw({
+    type: "REMOTE_COMMAND",
+    pin: currentPin(),
+    command,
+    timestamp: Date.now()
+  });
+
+  toast(command.replaceAll("_", " "));
+}
+
+function sendNumber(number) {
+  if (!socket || socket.readyState !== WebSocket.OPEN) {
+    toast("Connect to receiver first");
+    autoReconnect();
+    return;
+  }
+  if (!paired) {
+    toast("Pair receiver first");
+    $("pinOverlay").style.display = "flex";
+    return;
+  }
+
+  sendRaw({
+    type: "REMOTE_NUMBER",
+    pin: currentPin(),
+    number,
+    timestamp: Date.now()
+  });
+
+  toast(number);
+}
+
+let sessionPin = "";
+
+function currentPin() {
+  return sessionPin;
+}
+
+// Capture the PIN without saving it to localStorage.
+const originalSubmit = submitPin;
+submitPin = function() {
+  const pin = $("pin").value.trim();
+  if (!/^\d{6}$/.test(pin)) return toast("Enter 6 digits");
+  sessionPin = pin;
+  sendRaw({
+    type: "PAIR_REQUEST",
+    pin,
+    deviceName: navigator.userAgent
+  });
+};
+
+function sendRaw(data) {
+  if (socket && socket.readyState === WebSocket.OPEN) {
+    socket.send(JSON.stringify(data));
+  }
+}
+
+function autoReconnect() {
+  const saved = loadReceiver();
+  if (saved?.address && (!socket || socket.readyState !== WebSocket.OPEN)) {
+    connectTo(saved.address);
+  }
+}
+
+/*
+ * Discovery:
+ *
+ * A normal browser cannot perform true mDNS/UDP discovery by itself.
+ * If your receiver later exposes an HTTP discovery endpoint, set:
+ *
+ *   DISCOVERY_URL = "http://RECEIVER-IP:8080/discover"
+ *
+ * and return JSON:
+ *   {"name":"WirelessRemote Receiver","ws":"ws://192.168.1.25:8080"}
+ *
+ * This page will automatically use that endpoint when configured.
+ *
+ * The current Android receiver project only exposes WebSocket, so the
+ * saved receiver is automatically reconnected, while manual discovery
+ * remains available.
+ */
+const DISCOVERY_URL = "";
+
+async function discover() {
+  $("devices").innerHTML = "";
+  toast("Searching…");
+
+  const saved = loadReceiver();
+  if (saved?.address) {
+    renderDevice(saved, true);
+    connectTo(saved.address);
+    return;
+  }
+
+  if (DISCOVERY_URL) {
+    try {
+      const r = await fetch(DISCOVERY_URL, { cache: "no-store" });
+      const list = await r.json();
+      const devices = Array.isArray(list) ? list : [list];
+
+      devices.forEach(d => {
+        if (d.ws) renderDevice({
+          name: d.name || "Wireless Remote Receiver",
+          address: normalizeAddress(d.ws)
+        });
+      });
+
+      if (devices.length) return;
+    } catch (e) {
+      console.log("Discovery endpoint unavailable", e);
+    }
+  }
+
+  /*
+   * Optional local-IP probing can be enabled if you know the LAN prefix.
+   * It is intentionally off by default because scanning a LAN from a
+   * GitHub Pages HTTPS site is blocked by browser mixed-content rules.
+   */
+  toast("No receiver discovered. Enter its local IP once.");
+  $("address").focus();
+}
+
+function init() {
+  const saved = loadReceiver();
+
+  /*
+   * Automatically reconnect to the last paired receiver.
+   * We only do this after the page has loaded.
+   */
+  if (saved?.address) {
+    setTimeout(() => connectTo(saved.address), 400);
+  }
+
+  $("pin").addEventListener("input", () => {
+    $("pin").value = $("pin").value.replace(/\D/g, "").slice(0, 6);
+  });
+
+  $("pin").addEventListener("keydown", e => {
+    if (e.key === "Enter") submitPin();
+  });
+
+  window.addEventListener("online", () => {
+    if (!socket) autoReconnect();
+  });
+}
+
+init();
+</script>
+</body>
+</html>
